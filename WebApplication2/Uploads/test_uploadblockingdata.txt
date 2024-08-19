@@ -1,0 +1,2 @@
+ACTION|Case ID|SID| Holder Name|Account Name|Account Number|Restriction Reason|Reference|Restrict Whole Account | Registered Date|Release Date|Restriction Status|Instrument|Asset Blocked|Notes
+CREATE | 1 | 000000000000001 | John | John Doe | JD001 | Restricted by OJK | DX-DX01-01 | 1 | 09/07/2024 | 09/07/2024 | Restricted | 45000 | 45000 |YTTA

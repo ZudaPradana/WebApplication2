@@ -37,6 +37,51 @@ WebApplication2
  Returns the Asp log object.
  </summary>
 </member>
+<member name="F:WebApplication2.About._Label_Output">
+<summary>
+Label_Output control.
+</summary>
+<remarks>
+Auto-generated field.
+To modify move field declaration from designer file to code-behind file.
+</remarks>
+</member>
+<member name="F:WebApplication2.About._Label_Upload_File">
+<summary>
+Label_Upload_File control.
+</summary>
+<remarks>
+Auto-generated field.
+To modify move field declaration from designer file to code-behind file.
+</remarks>
+</member>
+<member name="F:WebApplication2.About._UploadFile">
+<summary>
+UploadFile control.
+</summary>
+<remarks>
+Auto-generated field.
+To modify move field declaration from designer file to code-behind file.
+</remarks>
+</member>
+<member name="F:WebApplication2.About._Btn_Reset">
+<summary>
+Btn_Reset control.
+</summary>
+<remarks>
+Auto-generated field.
+To modify move field declaration from designer file to code-behind file.
+</remarks>
+</member>
+<member name="F:WebApplication2.About._Btn_Submit">
+<summary>
+Btn_Submit control.
+</summary>
+<remarks>
+Auto-generated field.
+To modify move field declaration from designer file to code-behind file.
+</remarks>
+</member>
 <member name="F:WebApplication2.Contact._Contact_ID">
 <summary>
 Contact_ID control.

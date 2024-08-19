@@ -1,12 +1,5 @@
 ﻿<%@ Page Title="Contact" Language="VB" MasterPageFile="~/Site.Master" AutoEventWireup="true" CodeBehind="Contact.aspx.vb" Inherits="WebApplication2.Contact" %>
 
-<asp:Content ID="Content2" ContentPlaceHolderID="HeaderContent" Runat="Server">
-	<ul class="breadcrumb no-list clearfix">
-        <li><a href="../Index.aspx"><strong>Logbook Pemblokiran</strong></a></li>
-        <li><a href="Index.aspx"><strong>Mail Settings</strong></a></li>
-        <li><a href="AddNewContact.aspx"><strong>Add New Contact</strong></a></li>
-	</ul>
-</asp:Content>
 <asp:Content ID="Content_Add_New_Contract" ContentPlaceHolderID="MainContent" Runat="Server">
     <style type="text/css">
         .hiddencol

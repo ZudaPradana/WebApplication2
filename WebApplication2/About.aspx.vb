@@ -1,7 +1,310 @@
-﻿Public Class About
-    Inherits Page
+﻿Imports System.IO
+Imports Microsoft.VisualBasic.Logging
+Imports MySql.Data.MySqlClient
 
+Public Class About
+    Inherits Page
+    Private connectionString As String = System.Configuration.ConfigurationManager.ConnectionStrings("MyDbConnectionString").ConnectionString
     Protected Sub Page_Load(ByVal sender As Object, ByVal e As EventArgs) Handles Me.Load
 
+        Try
+            Using connection As New MySqlConnection(connectionString)
+                connection.Open()
+                ' Jika koneksi berhasil, tampilkan pesan sukses
+                Response.Write("Connection successful!")
+            End Using
+        Catch ex As Exception
+            ' Jika koneksi gagal, tampilkan pesan error
+            Response.Write("Connection failed: " & ex.Message)
+        End Try
     End Sub
+
+    ' Event handler untuk tombol Submit
+    Protected Sub Btn_Submit_Click(ByVal sender As Object, ByVal e As EventArgs) Handles Btn_Submit.Click
+        Try
+            ' Pastikan kontrol tidak bernilai Nothing dan ada file yang diupload
+            If UploadFile IsNot Nothing AndAlso UploadFile.HasFile Then
+                ' Tentukan path folder dan nama file
+                Dim folderPath As String = Server.MapPath("~/Uploads/")
+                Dim fileName As String = UploadFile.FileName
+                Dim filePath As String = System.IO.Path.Combine(folderPath, fileName)
+
+                ' Periksa apakah folder ada; jika tidak, buat folder
+                If Not System.IO.Directory.Exists(folderPath) Then
+                    System.IO.Directory.CreateDirectory(folderPath)
+                End If
+
+                ' Simpan file ke folder yang ditentukan
+                UploadFile.SaveAs(filePath)
+                Console.WriteLine("File uploaded successfully: " & filePath)
+
+                ' Panggil metode untuk memproses file
+                ProcessFile(filePath)
+
+                ' Tampilkan pesan sukses jika file diproses tanpa error
+                ScriptManager.RegisterStartupScript(Me, Me.GetType(), "showSuccessToast", "toastr.success('File berhasil diunggah dan diproses.');", True)
+            Else
+                ' Jika tidak ada file yang diupload, tampilkan pesan error
+                ScriptManager.RegisterStartupScript(Me, Me.GetType(), "showErrorToast", "toastr.error('Tidak ada file yang diunggah. Harap pilih file untuk diunggah.');", True)
+            End If
+        Catch ex As Exception
+            ' Tampilkan pesan error jika ada pengecualian
+            ScriptManager.RegisterStartupScript(Me, Me.GetType(), "showErrorToast", $"toastr.error('Error: {ex.Message}');", True)
+        End Try
+    End Sub
+
+
+    ' Metode untuk memproses file yang diupload
+    Private Sub ProcessFile(ByVal filePath As String)
+        Try
+            ' Baca semua baris dari file
+            Dim lines() As String = System.IO.File.ReadAllLines(filePath)
+
+            ' Cek apakah file kosong
+            If lines.Length = 0 Then
+                Throw New Exception("File kosong. Tidak ada data untuk diproses.")
+            End If
+
+            ' Validasi header di baris pertama
+            Dim header As String = lines(0)
+            Dim expectedHeader As String = "ACTION|Case ID|SID| Holder Name|Account Name|Account Number|Restriction Reason|Reference|Restrict Whole Account | Registered Date|Release Date|Restriction Status|Instrument|Asset Blocked|Notes"
+
+            If Not header.Trim().ToUpper().Equals(expectedHeader.ToUpper()) Then
+                Throw New Exception("Format header tidak valid. Harap gunakan format yang benar.")
+            End If
+
+            ' Proses setiap baris setelah header
+            For i As Integer = 1 To lines.Length - 1
+                Dim line As String = lines(i).Trim()
+
+                ' Pisahkan baris berdasarkan karakter separator '|'
+                Dim arrLine() As String = line.Split("|"c)
+
+                ' Cek apakah jumlah kolom sesuai dengan yang diharapkan
+                If arrLine.Length <> 15 Then
+                    Throw New Exception($"Jumlah kolom tidak sesuai di baris {i + 1}. Harap pastikan ada 15 kolom.")
+                End If
+
+                ' Proses data
+                Dim sMessageError As String = String.Empty
+                If Not ProcessBlockingData(arrLine, sMessageError) Then
+                    Throw New Exception(sMessageError)
+                End If
+            Next
+        Catch ex As Exception
+            Throw New Exception("Error membaca file: " & ex.Message)
+        End Try
+    End Sub
+
+
+    ' Fungsi untuk mendapatkan Unique ID
+    Protected Function GetUniqueID(ByVal in_iAddNUmber As Integer) As String
+        ' Get Unique ID
+        Dim oCurrentTime As DateTime = DateTime.UtcNow
+        Dim sCurrentTime As String = oCurrentTime.ToString
+        Dim sParsedDateTime As DateTime = DateTime.Parse(sCurrentTime)
+        Dim dUnixTime As Double = (sParsedDateTime - New DateTime(1970, 1, 1, 0, 0, 0)).TotalSeconds + in_iAddNUmber
+        Dim sUTC As String = dUnixTime.ToString
+        Dim sPrefix As String = ""
+        Dim oRandom As New Random()
+        For i As Integer = 1 To 5
+            sPrefix &= ChrW(oRandom.Next(65, 90))
+        Next
+        Return (sPrefix & sUTC)
+    End Function
+
+    ' Fungsi untuk memproses data blocking
+    Protected Function ProcessBlockingData(ByVal in_arFileContentLine() As String, ByRef out_sMessageError As String) As Boolean
+        Dim bSuccess As Boolean = True
+        Dim sAction As String = in_arFileContentLine(0).Trim().ToUpper()
+        Dim sCaseID As String = in_arFileContentLine(1).Trim()
+        Dim sSID As String = in_arFileContentLine(2).Trim()
+        Dim sAccountNumber As String = in_arFileContentLine(5).Trim()
+        Dim sHolderName As String = in_arFileContentLine(3).Trim()
+        Dim sAccountName As String = in_arFileContentLine(4).Trim()
+        Dim sRestrictionReason As String = in_arFileContentLine(6).Trim()
+        Dim sReference As String = in_arFileContentLine(7).Trim()
+        Dim sRestrictWholeAccount As String = in_arFileContentLine(8).Trim()
+        Dim sRegisteredDate As String = in_arFileContentLine(9).Trim()
+        Dim sReleaseDate As String = in_arFileContentLine(10).Trim()
+        Dim sRestrictionStatus As String = in_arFileContentLine(11).Trim()
+        Dim sInstrument As String = in_arFileContentLine(12).Trim()
+        Dim sAssetBlocked As String = in_arFileContentLine(13).Trim()
+        Dim sNotes As String = in_arFileContentLine(14).Trim()
+
+        Dim dtRegisteredDate As DateTime
+        Dim dtReleaseDate As DateTime
+
+        If DateTime.TryParseExact(sRegisteredDate, "dd/MM/yyyy", Nothing, Globalization.DateTimeStyles.None, dtRegisteredDate) AndAlso
+       DateTime.TryParseExact(sReleaseDate, "dd/MM/yyyy", Nothing, Globalization.DateTimeStyles.None, dtReleaseDate) Then
+
+            Try
+                Using con As New MySqlConnection(connectionString)
+                    con.Open()
+
+                    ' Check if data already exists
+                    Dim sSQLCheckExisting As String = "SELECT COUNT(*) FROM LB_BLOK_BLOCKING_DATA WHERE CASE_ID = @CaseID AND SID = @SID AND ACCOUNT_NO = @AccountNo"
+                    Dim dataExists As Boolean = False
+
+                    Using cmdCheck As New MySqlCommand(sSQLCheckExisting, con)
+                        cmdCheck.Parameters.AddWithValue("@CaseID", sCaseID)
+                        cmdCheck.Parameters.AddWithValue("@SID", sSID)
+                        cmdCheck.Parameters.AddWithValue("@AccountNo", sAccountNumber)
+                        dataExists = Convert.ToInt32(cmdCheck.ExecuteScalar()) > 0
+                    End Using
+
+                    If sAction = "CREATE" Then
+                        If Not dataExists Then
+                            ' Insert untuk aksi CREATE
+                            Dim sSQLInsertBlocking As String = "INSERT INTO LB_BLOK_BLOCKING (BLOCKING_ID, CASE_ID, RESTRICTION_REASON, BLOCKING_ACTION, BLOCKING_STATUS, BLOCKING_APPROVAL, BLOCKING_CREATE_DATE, UPDATED_BY, LAST_UPDATE) " &
+                                                           "VALUES(@BlockingID, @CaseID, @RestrictionReason, 'CREATE', 'WAITING', 'WAITING', CURDATE(), '', CURRENT_TIMESTAMP)"
+                            Dim sSQLInsertBlockingData As String = "INSERT INTO LB_BLOK_BLOCKING_DATA (BLOCKING_ID, CASE_ID, SID, ACCOUNT_NO, HOLDER_NAME, ACCOUNT_NAME, RESTRICTION_REASON, REFERENCE, RESTRICT_WHOLE_ACCOUNT, REGISTERED_DATE, RELEASE_DATE, RESTRICTION_STATUS, NOTES, LAST_UPDATE) " &
+                                                               "VALUES(@BlockingID, @CaseID, @SID, @AccountNo, @HolderName, @AccountName, @RestrictionReason, @Reference, @RestrictWholeAccount, @RegisteredDate, @ReleaseDate, @RestrictionStatus, @Notes, CURRENT_TIMESTAMP)"
+                            Dim sSQLInsertBlockingInstrument As String = "INSERT INTO LB_BLOK_BLOCKING_DATA_INSTRUMENT (BLOCKING_ID, CASE_ID, SID, ACCOUNT_NO, INSTRUMENT, ASSET_BLOCKED, LAST_UPDATE) " &
+                                                                     "VALUES(@BlockingID, @CaseID, @SID, @AccountNo, @Instrument, @AssetBlocked, CURRENT_TIMESTAMP)"
+                            Dim blockingID As String = GetUniqueID(1) ' Generate unique Blocking ID
+
+                            ' Insert into LB_BLOK_BLOCKING
+                            Using cmd As New MySqlCommand(sSQLInsertBlocking, con)
+                                cmd.Parameters.AddWithValue("@BlockingID", blockingID)
+                                cmd.Parameters.AddWithValue("@CaseID", sCaseID)
+                                cmd.Parameters.AddWithValue("@RestrictionReason", sRestrictionReason)
+                                cmd.ExecuteNonQuery()
+                            End Using
+
+                            ' Insert into LB_BLOK_BLOCKING_DATA
+                            Using cmd As New MySqlCommand(sSQLInsertBlockingData, con)
+                                cmd.Parameters.AddWithValue("@BlockingID", blockingID)
+                                cmd.Parameters.AddWithValue("@CaseID", sCaseID)
+                                cmd.Parameters.AddWithValue("@SID", sSID)
+                                cmd.Parameters.AddWithValue("@AccountNo", sAccountNumber)
+                                cmd.Parameters.AddWithValue("@HolderName", sHolderName)
+                                cmd.Parameters.AddWithValue("@AccountName", sAccountName)
+                                cmd.Parameters.AddWithValue("@RestrictionReason", sRestrictionReason)
+                                cmd.Parameters.AddWithValue("@Reference", sReference)
+                                cmd.Parameters.AddWithValue("@RestrictWholeAccount", sRestrictWholeAccount)
+                                cmd.Parameters.AddWithValue("@RegisteredDate", dtRegisteredDate)
+                                cmd.Parameters.AddWithValue("@ReleaseDate", dtReleaseDate)
+                                cmd.Parameters.AddWithValue("@RestrictionStatus", sRestrictionStatus)
+                                cmd.Parameters.AddWithValue("@Notes", sNotes)
+                                cmd.ExecuteNonQuery()
+                            End Using
+
+                            ' Insert into LB_BLOK_BLOCKING_DATA_INSTRUMENT
+                            Using cmd As New MySqlCommand(sSQLInsertBlockingInstrument, con)
+                                cmd.Parameters.AddWithValue("@BlockingID", blockingID)
+                                cmd.Parameters.AddWithValue("@CaseID", sCaseID)
+                                cmd.Parameters.AddWithValue("@SID", sSID)
+                                cmd.Parameters.AddWithValue("@AccountNo", sAccountNumber)
+                                cmd.Parameters.AddWithValue("@Instrument", sInstrument)
+                                cmd.Parameters.AddWithValue("@AssetBlocked", sAssetBlocked)
+                                cmd.ExecuteNonQuery()
+                            End Using
+                        Else
+                            out_sMessageError = "Data dengan CaseID, SID, dan AccountNo yang sama sudah ada."
+                            bSuccess = False
+                        End If
+
+                    ElseIf sAction = "MODIFY" Then
+                        If dataExists Then
+                            ' Update data yang sudah ada
+                            Dim sSQLUpdateBlockingData As String = "UPDATE LB_BLOK_BLOCKING_DATA SET HOLDER_NAME = @HolderName, ACCOUNT_NAME = @AccountName, RESTRICTION_REASON = @RestrictionReason, REFERENCE = @Reference, RESTRICT_WHOLE_ACCOUNT = @RestrictWholeAccount, REGISTERED_DATE = @RegisteredDate, RELEASE_DATE = @ReleaseDate, RESTRICTION_STATUS = @RestrictionStatus, NOTES = @Notes, LAST_UPDATE = CURRENT_TIMESTAMP WHERE CASE_ID = @CaseID AND SID = @SID AND ACCOUNT_NO = @AccountNo"
+
+                            Using cmd As New MySqlCommand(sSQLUpdateBlockingData, con)
+                                cmd.Parameters.AddWithValue("@HolderName", sHolderName)
+                                cmd.Parameters.AddWithValue("@AccountName", sAccountName)
+                                cmd.Parameters.AddWithValue("@RestrictionReason", sRestrictionReason)
+                                cmd.Parameters.AddWithValue("@Reference", sReference)
+                                cmd.Parameters.AddWithValue("@RestrictWholeAccount", sRestrictWholeAccount)
+                                cmd.Parameters.AddWithValue("@RegisteredDate", dtRegisteredDate)
+                                cmd.Parameters.AddWithValue("@ReleaseDate", dtReleaseDate)
+                                cmd.Parameters.AddWithValue("@RestrictionStatus", sRestrictionStatus)
+                                cmd.Parameters.AddWithValue("@Notes", sNotes)
+                                cmd.Parameters.AddWithValue("@CaseID", sCaseID)
+                                cmd.Parameters.AddWithValue("@SID", sSID)
+                                cmd.Parameters.AddWithValue("@AccountNo", sAccountNumber)
+                                cmd.ExecuteNonQuery()
+                            End Using
+
+                            ' Update LB_BLOK_BLOCKING_DATA_INSTRUMENT if necessary
+                            Dim sSQLUpdateBlockingInstrument As String = "UPDATE LB_BLOK_BLOCKING_DATA_INSTRUMENT SET INSTRUMENT = @Instrument, ASSET_BLOCKED = @AssetBlocked, LAST_UPDATE = CURRENT_TIMESTAMP WHERE CASE_ID = @CaseID AND SID = @SID AND ACCOUNT_NO = @AccountNo"
+
+                            Using cmd As New MySqlCommand(sSQLUpdateBlockingInstrument, con)
+                                cmd.Parameters.AddWithValue("@Instrument", sInstrument)
+                                cmd.Parameters.AddWithValue("@AssetBlocked", sAssetBlocked)
+                                cmd.Parameters.AddWithValue("@CaseID", sCaseID)
+                                cmd.Parameters.AddWithValue("@SID", sSID)
+                                cmd.Parameters.AddWithValue("@AccountNo", sAccountNumber)
+                                cmd.Parameters.AddWithValue("@Notes", sNotes)
+                                cmd.ExecuteNonQuery()
+                            End Using
+                        Else
+                            out_sMessageError = "Data yang akan diubah tidak ditemukan."
+                            bSuccess = False
+                        End If
+
+                    ElseIf sAction = "DELETE" Then
+                        If dataExists Then
+                            ' Hapus data dari ketiga tabel
+                            Dim sSQLDeleteBlockingData As String = "DELETE FROM LB_BLOK_BLOCKING_DATA WHERE CASE_ID = @CaseID AND SID = @SID AND ACCOUNT_NO = @AccountNo"
+                            Dim sSQLDeleteBlockingInstrument As String = "DELETE FROM LB_BLOK_BLOCKING_DATA_INSTRUMENT WHERE CASE_ID = @CaseID AND SID = @SID AND ACCOUNT_NO = @AccountNo"
+                            Dim sSQLDeleteBlocking As String = "DELETE FROM LB_BLOK_BLOCKING WHERE CASE_ID = @CaseID"
+
+                            Using cmd As New MySqlCommand(sSQLDeleteBlockingData, con)
+                                cmd.Parameters.AddWithValue("@CaseID", sCaseID)
+                                cmd.Parameters.AddWithValue("@SID", sSID)
+                                cmd.Parameters.AddWithValue("@AccountNo", sAccountNumber)
+                                cmd.ExecuteNonQuery()
+                            End Using
+
+                            Using cmd As New MySqlCommand(sSQLDeleteBlockingInstrument, con)
+                                cmd.Parameters.AddWithValue("@CaseID", sCaseID)
+                                cmd.Parameters.AddWithValue("@SID", sSID)
+                                cmd.Parameters.AddWithValue("@AccountNo", sAccountNumber)
+                                cmd.ExecuteNonQuery()
+                            End Using
+
+                            Using cmd As New MySqlCommand(sSQLDeleteBlocking, con)
+                                cmd.Parameters.AddWithValue("@CaseID", sCaseID)
+                                cmd.ExecuteNonQuery()
+                            End Using
+                        Else
+                            out_sMessageError = "Data yang akan dihapus tidak ditemukan."
+                            bSuccess = False
+                        End If
+                    Else
+                        out_sMessageError = "Aksi tidak valid."
+                        bSuccess = False
+                    End If
+
+                End Using
+            Catch ex As MySqlException
+                out_sMessageError = "Terjadi kesalahan saat memproses data: " & ex.Message
+                bSuccess = False
+            End Try
+        Else
+            out_sMessageError = "Format tanggal tidak valid. Harap gunakan format 'dd/MM/yyyy'."
+            bSuccess = False
+        End If
+
+        Return bSuccess
+    End Function
+
+
+    ' Reset button
+    Protected Sub Btn_Reset_Click(ByVal sender As Object, ByVal e As EventArgs)
+        ' Button Reset Handler
+        ' Parameter : {Object} Objects
+        ' Return    : -
+        GetResetFields()
+    End Sub
+
+    Protected Sub GetResetFields()
+        ' Reset Fields
+        ' Parameter : -
+        ' Return    : -
+        UploadFile.Dispose()
+        UploadFile.PostedFile.InputStream.Dispose()
+    End Sub
+
 End Class
