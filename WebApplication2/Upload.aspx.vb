@@ -2,7 +2,7 @@
 Imports Microsoft.VisualBasic.Logging
 Imports MySql.Data.MySqlClient
 
-Public Class About
+Public Class Upload
     Inherits Page
     Private connectionString As String = System.Configuration.ConfigurationManager.ConnectionStrings("MyDbConnectionString").ConnectionString
     Protected Sub Page_Load(ByVal sender As Object, ByVal e As EventArgs) Handles Me.Load

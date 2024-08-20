@@ -1,4 +1,4 @@
-﻿<%@ Page Title="About" Language="VB" MasterPageFile="~/Site.Master" AutoEventWireup="true" CodeBehind="About.aspx.vb" Inherits="WebApplication2.About" %>
+﻿<%@ Page Title="Upload" Language="VB" MasterPageFile="~/Site.Master" AutoEventWireup="true" CodeBehind="Upload.aspx.vb" Inherits="WebApplication2.Upload" %>
 
 <asp:Content ID="Content_Upload_File" ContentPlaceHolderID="MainContent" Runat="Server">
 	<link rel="stylesheet" href="https://code.jquery.com/ui/1.8.24/themes/base/jquery-ui.css">
