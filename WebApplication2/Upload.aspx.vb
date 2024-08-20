@@ -39,7 +39,7 @@ Public Class Upload
                 Console.WriteLine("File uploaded successfully: " & filePath)
 
                 ' Panggil metode untuk memproses file
-                ProcessFile(filePath)
+                ProcessFile(filePath, fileName)
 
                 ' Tampilkan pesan sukses jika file diproses tanpa error
                 ScriptManager.RegisterStartupScript(Me, Me.GetType(), "showSuccessToast", "toastr.success('File berhasil diunggah dan diproses.');", True)
@@ -55,7 +55,7 @@ Public Class Upload
 
 
     ' Metode untuk memproses file yang diupload
-    Private Sub ProcessFile(ByVal filePath As String)
+    Private Sub ProcessFile(ByVal filePath As String, ByVal fileName As String)
         Try
             ' Baca semua baris dari file
             Dim lines() As String = System.IO.File.ReadAllLines(filePath)
@@ -73,24 +73,47 @@ Public Class Upload
                 Throw New Exception("Format header tidak valid. Harap gunakan format yang benar.")
             End If
 
+            Dim sID As String = GetUniqueID(0)
+            Dim iSuccessCount As Integer = 0
+            Dim iFailCount As Integer = 0
+            Dim iEmpty As Integer = 0
+            Dim iNoofData As Integer = lines.Length()
+
             ' Proses setiap baris setelah header
             For i As Integer = 1 To lines.Length - 1
                 Dim line As String = lines(i).Trim()
+                If (Not String.IsNullOrWhiteSpace(line)) Then
+                    ' Pisahkan baris berdasarkan karakter separator '|'
+                    Dim arrLine() As String = line.Split("|"c)
 
-                ' Pisahkan baris berdasarkan karakter separator '|'
-                Dim arrLine() As String = line.Split("|"c)
+                    ' Cek apakah jumlah kolom sesuai dengan yang diharapkan
+                    If arrLine.Length <> 15 Then
+                        Throw New Exception($"Jumlah kolom tidak sesuai di baris {i + 1}. Harap pastikan ada 15 kolom.")
+                    End If
 
-                ' Cek apakah jumlah kolom sesuai dengan yang diharapkan
-                If arrLine.Length <> 15 Then
-                    Throw New Exception($"Jumlah kolom tidak sesuai di baris {i + 1}. Harap pastikan ada 15 kolom.")
-                End If
+                    Dim blockingID As String = GetUniqueID(1)
 
-                ' Proses data
-                Dim sMessageError As String = String.Empty
-                If Not ProcessBlockingData(arrLine, sMessageError) Then
-                    Throw New Exception(sMessageError)
+                    ' Proses data
+                    Dim sMessageError As String = String.Empty
+                    Dim isSuccess As Boolean = ProcessBlockingData(arrLine, blockingID, sMessageError)
+
+                    If Not isSuccess Then
+                        Throw New Exception(sMessageError)
+                    End If
+
+                    GetSaveUploadDetailLog(sID, blockingID, i, arrLine(0).Trim().ToUpper(), line, isSuccess, sMessageError)
+                    If (isSuccess) Then
+                        iSuccessCount += 1
+                    Else
+                        iFailCount += 1
+                    End If
+                Else
+                    iEmpty += 1
                 End If
             Next
+            iNoofData = (iNoofData - iEmpty)
+
+            GetSaveUploadLog(sID, fileName, iNoofData, iSuccessCount, iFailCount)
         Catch ex As Exception
             Throw New Exception("Error membaca file: " & ex.Message)
         End Try
@@ -113,8 +136,63 @@ Public Class Upload
         Return (sPrefix & sUTC)
     End Function
 
+    Protected Sub GetSaveUploadLog(ByVal in_sID As String, ByVal in_sFileName As String, ByVal in_iDataRow As Integer,
+                                ByVal in_iDataSuccess As Integer, ByVal in_iDataFail As Integer)
+        Dim sUpdatedBy As String = ""
+        Dim sStatus As String = "SUCCESS"
+
+        ' determine status
+        If (in_iDataFail > 0) Then
+            sStatus = "PARTIAL"
+            If (in_iDataRow = in_iDataFail) Then sStatus = "FAIL"
+        End If
+
+        Using con As New MySqlConnection(connectionString)
+            con.Open()
+            Dim sSqlInsertUploadDetailLog As String = "INSERT INTO LB_BLOK_UPLOADLOG(UPLOADLOG_ID, FILENAME, CATEGORY, DATA_ROW, DATA_SUCCESS, DATA_FAIL, UPLOAD_TIME, UPLOAD_STATUS, UPDATED_BY, LAST_UPDATE) " &
+                                                            "VALUES(@UPLOADLOG_ID, @FILENAME, 'BLOCKING', @DATA_ROW, @DATA_SUCCESS, @DATA_FAIL, CURRENT_TIMESTAMP, @UPLOAD_STATUS, @UPDATED_BY, CURRENT_TIMESTAMP)"
+            ' Insert into LB_BLOK_UPLOAD_DETAILLOG
+            Using cmd As New MySqlCommand(sSqlInsertUploadDetailLog, con)
+                cmd.Parameters.AddWithValue("@UPLOADLOG_ID", in_sID)
+                cmd.Parameters.AddWithValue("@FILENAME", in_sFileName)
+                cmd.Parameters.AddWithValue("@DATA_ROW", in_iDataRow)
+                cmd.Parameters.AddWithValue("@DATA_SUCCESS", in_iDataSuccess)
+                cmd.Parameters.AddWithValue("@DATA_FAIL", in_iDataFail)
+                cmd.Parameters.AddWithValue("@UPLOAD_STATUS", sStatus)
+                cmd.Parameters.AddWithValue("@UPDATED_BY", sUpdatedBy)
+                cmd.ExecuteNonQuery()
+            End Using
+        End Using
+    End Sub
+
+    Protected Sub GetSaveUploadDetailLog(ByVal in_sID As String, ByVal in_sSubID As String, ByVal in_iRow As Integer,
+                                            ByVal in_sCommand As String, ByVal in_sContentLine As String, ByVal in_bStatus As Boolean,
+                                            ByRef out_sMessageError As String)
+
+        Try
+            Using con As New MySqlConnection(connectionString)
+                con.Open()
+                Dim sSqlInsertUploadDetailLog As String = "INSERT INTO LB_BLOK_UPLOAD_DETAILLOG(UPLOADLOG_ID, UPLOADLOG_SUB_ID, SEQ_NO, COMMAND, RECIPIENT, DATA, STATUS, NOTES, LAST_UPDATE) " &
+                                                                "VALUES(@UPLOADLOG_ID, @UPLOADLOG_SUB_ID, @SEQ_NO, @COMMAND, '-', @DATA, @STATUS, @NOTES, CURRENT_TIMESTAMP)"
+                ' Insert into LB_BLOK_UPLOAD_DETAILLOG
+                Using cmd As New MySqlCommand(sSqlInsertUploadDetailLog, con)
+                    cmd.Parameters.AddWithValue("@UPLOADLOG_ID", in_sID)
+                    cmd.Parameters.AddWithValue("@UPLOADLOG_SUB_ID", in_sSubID)
+                    cmd.Parameters.AddWithValue("@SEQ_NO", in_iRow)
+                    cmd.Parameters.AddWithValue("@COMMAND", in_sCommand)
+                    cmd.Parameters.AddWithValue("@DATA", in_sContentLine)
+                    cmd.Parameters.AddWithValue("@STATUS", IIf(in_bStatus, "SUCCESS", "FAIL"))
+                    cmd.Parameters.AddWithValue("@NOTES", out_sMessageError)
+                    cmd.ExecuteNonQuery()
+                End Using
+            End Using
+        Catch ex As MySqlException
+            out_sMessageError = "Terjadi kesalahan saat memproses data: " & ex.Message
+        End Try
+    End Sub
+
     ' Fungsi untuk memproses data blocking
-    Protected Function ProcessBlockingData(ByVal in_arFileContentLine() As String, ByRef out_sMessageError As String) As Boolean
+    Protected Function ProcessBlockingData(ByVal in_arFileContentLine() As String, ByVal sSubID As String, ByRef out_sMessageError As String) As Boolean
         Dim bSuccess As Boolean = True
         Dim sAction As String = in_arFileContentLine(0).Trim().ToUpper()
         Dim sCaseID As String = in_arFileContentLine(1).Trim()
@@ -136,7 +214,7 @@ Public Class Upload
         Dim dtReleaseDate As DateTime
 
         If DateTime.TryParseExact(sRegisteredDate, "dd/MM/yyyy", Nothing, Globalization.DateTimeStyles.None, dtRegisteredDate) AndAlso
-       DateTime.TryParseExact(sReleaseDate, "dd/MM/yyyy", Nothing, Globalization.DateTimeStyles.None, dtReleaseDate) Then
+    DateTime.TryParseExact(sReleaseDate, "dd/MM/yyyy", Nothing, Globalization.DateTimeStyles.None, dtReleaseDate) Then
 
             Try
                 Using con As New MySqlConnection(connectionString)
@@ -157,16 +235,15 @@ Public Class Upload
                         If Not dataExists Then
                             ' Insert untuk aksi CREATE
                             Dim sSQLInsertBlocking As String = "INSERT INTO LB_BLOK_BLOCKING (BLOCKING_ID, CASE_ID, RESTRICTION_REASON, BLOCKING_ACTION, BLOCKING_STATUS, BLOCKING_APPROVAL, BLOCKING_CREATE_DATE, UPDATED_BY, LAST_UPDATE) " &
-                                                           "VALUES(@BlockingID, @CaseID, @RestrictionReason, 'CREATE', 'WAITING', 'WAITING', CURDATE(), '', CURRENT_TIMESTAMP)"
+                                                        "VALUES(@BlockingID, @CaseID, @RestrictionReason, 'CREATE', 'WAITING', 'WAITING', CURDATE(), '', CURRENT_TIMESTAMP)"
                             Dim sSQLInsertBlockingData As String = "INSERT INTO LB_BLOK_BLOCKING_DATA (BLOCKING_ID, CASE_ID, SID, ACCOUNT_NO, HOLDER_NAME, ACCOUNT_NAME, RESTRICTION_REASON, REFERENCE, RESTRICT_WHOLE_ACCOUNT, REGISTERED_DATE, RELEASE_DATE, RESTRICTION_STATUS, NOTES, LAST_UPDATE) " &
-                                                               "VALUES(@BlockingID, @CaseID, @SID, @AccountNo, @HolderName, @AccountName, @RestrictionReason, @Reference, @RestrictWholeAccount, @RegisteredDate, @ReleaseDate, @RestrictionStatus, @Notes, CURRENT_TIMESTAMP)"
+                                                            "VALUES(@BlockingID, @CaseID, @SID, @AccountNo, @HolderName, @AccountName, @RestrictionReason, @Reference, @RestrictWholeAccount, @RegisteredDate, @ReleaseDate, @RestrictionStatus, @Notes, CURRENT_TIMESTAMP)"
                             Dim sSQLInsertBlockingInstrument As String = "INSERT INTO LB_BLOK_BLOCKING_DATA_INSTRUMENT (BLOCKING_ID, CASE_ID, SID, ACCOUNT_NO, INSTRUMENT, ASSET_BLOCKED, LAST_UPDATE) " &
-                                                                     "VALUES(@BlockingID, @CaseID, @SID, @AccountNo, @Instrument, @AssetBlocked, CURRENT_TIMESTAMP)"
-                            Dim blockingID As String = GetUniqueID(1) ' Generate unique Blocking ID
+                                                                    "VALUES(@BlockingID, @CaseID, @SID, @AccountNo, @Instrument, @AssetBlocked, CURRENT_TIMESTAMP)"
 
                             ' Insert into LB_BLOK_BLOCKING
                             Using cmd As New MySqlCommand(sSQLInsertBlocking, con)
-                                cmd.Parameters.AddWithValue("@BlockingID", blockingID)
+                                cmd.Parameters.AddWithValue("@BlockingID", sSubID)
                                 cmd.Parameters.AddWithValue("@CaseID", sCaseID)
                                 cmd.Parameters.AddWithValue("@RestrictionReason", sRestrictionReason)
                                 cmd.ExecuteNonQuery()
@@ -174,7 +251,7 @@ Public Class Upload
 
                             ' Insert into LB_BLOK_BLOCKING_DATA
                             Using cmd As New MySqlCommand(sSQLInsertBlockingData, con)
-                                cmd.Parameters.AddWithValue("@BlockingID", blockingID)
+                                cmd.Parameters.AddWithValue("@BlockingID", sSubID)
                                 cmd.Parameters.AddWithValue("@CaseID", sCaseID)
                                 cmd.Parameters.AddWithValue("@SID", sSID)
                                 cmd.Parameters.AddWithValue("@AccountNo", sAccountNumber)
@@ -192,7 +269,7 @@ Public Class Upload
 
                             ' Insert into LB_BLOK_BLOCKING_DATA_INSTRUMENT
                             Using cmd As New MySqlCommand(sSQLInsertBlockingInstrument, con)
-                                cmd.Parameters.AddWithValue("@BlockingID", blockingID)
+                                cmd.Parameters.AddWithValue("@BlockingID", sSubID)
                                 cmd.Parameters.AddWithValue("@CaseID", sCaseID)
                                 cmd.Parameters.AddWithValue("@SID", sSID)
                                 cmd.Parameters.AddWithValue("@AccountNo", sAccountNumber)
