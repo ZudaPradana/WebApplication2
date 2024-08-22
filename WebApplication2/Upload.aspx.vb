@@ -65,14 +65,6 @@ Public Class Upload
                 Throw New Exception("File kosong. Tidak ada data untuk diproses.")
             End If
 
-            ' Validasi header di baris pertama
-            Dim header As String = lines(0)
-            Dim expectedHeader As String = "ACTION|Case ID|SID| Holder Name|Account Name|Account Number|Restriction Reason|Reference|Restrict Whole Account | Registered Date|Release Date|Restriction Status|Instrument|Asset Blocked|Notes"
-
-            If Not header.Trim().ToUpper().Equals(expectedHeader.ToUpper()) Then
-                Throw New Exception("Format header tidak valid. Harap gunakan format yang benar.")
-            End If
-
             Dim sID As String = GetUniqueID(0)
             Dim iSuccessCount As Integer = 0
             Dim iFailCount As Integer = 0
@@ -80,29 +72,25 @@ Public Class Upload
             Dim iNoofData As Integer = lines.Length()
 
             ' Proses setiap baris setelah header
-            For i As Integer = 1 To lines.Length - 1
-                Dim line As String = lines(i).Trim()
+            For i As Integer = 1 To lines.Length
+                Dim line As String = lines(i - 1).Trim()
                 If (Not String.IsNullOrWhiteSpace(line)) Then
                     ' Pisahkan baris berdasarkan karakter separator '|'
                     Dim arrLine() As String = line.Split("|"c)
-
-                    ' Cek apakah jumlah kolom sesuai dengan yang diharapkan
-                    If arrLine.Length <> 15 Then
-                        Throw New Exception($"Jumlah kolom tidak sesuai di baris {i + 1}. Harap pastikan ada 15 kolom.")
-                    End If
 
                     Dim blockingID As String = GetUniqueID(1)
 
                     ' Proses data
                     Dim sMessageError As String = String.Empty
-                    Dim isSuccess As Boolean = ProcessBlockingData(arrLine, blockingID, sMessageError)
+                    Dim result = ProcessBlockingData(arrLine, blockingID, sMessageError)
 
-                    If Not isSuccess Then
-                        Throw New Exception(sMessageError)
+                    If Not String.IsNullOrEmpty(result.Item2) Then
+                        GetSaveUploadDetailLog(sID, result.Item2, i, arrLine(0).Trim().ToUpper(), line, result.Item1, sMessageError)
+                    Else
+                        GetSaveUploadDetailLog(sID, blockingID, i, arrLine(0).Trim().ToUpper(), line, result.Item1, sMessageError)
                     End If
 
-                    GetSaveUploadDetailLog(sID, blockingID, i, arrLine(0).Trim().ToUpper(), line, isSuccess, sMessageError)
-                    If (isSuccess) Then
+                    If (result.Item1) Then
                         iSuccessCount += 1
                     Else
                         iFailCount += 1
@@ -149,10 +137,10 @@ Public Class Upload
 
         Using con As New MySqlConnection(connectionString)
             con.Open()
-            Dim sSqlInsertUploadDetailLog As String = "INSERT INTO LB_BLOK_UPLOADLOG(UPLOADLOG_ID, FILENAME, CATEGORY, DATA_ROW, DATA_SUCCESS, DATA_FAIL, UPLOAD_TIME, UPLOAD_STATUS, UPDATED_BY, LAST_UPDATE) " &
+            Dim sSqlInsertUploadLog As String = "INSERT INTO LB_BLOK_UPLOADLOG(UPLOADLOG_ID, FILENAME, CATEGORY, DATA_ROW, DATA_SUCCESS, DATA_FAIL, UPLOAD_TIME, UPLOAD_STATUS, UPDATED_BY, LAST_UPDATE) " &
                                                             "VALUES(@UPLOADLOG_ID, @FILENAME, 'BLOCKING', @DATA_ROW, @DATA_SUCCESS, @DATA_FAIL, CURRENT_TIMESTAMP, @UPLOAD_STATUS, @UPDATED_BY, CURRENT_TIMESTAMP)"
-            ' Insert into LB_BLOK_UPLOAD_DETAILLOG
-            Using cmd As New MySqlCommand(sSqlInsertUploadDetailLog, con)
+            ' Insert into LB_BLOK_UPLOADLOG
+            Using cmd As New MySqlCommand(sSqlInsertUploadLog, con)
                 cmd.Parameters.AddWithValue("@UPLOADLOG_ID", in_sID)
                 cmd.Parameters.AddWithValue("@FILENAME", in_sFileName)
                 cmd.Parameters.AddWithValue("@DATA_ROW", in_iDataRow)
@@ -192,7 +180,7 @@ Public Class Upload
     End Sub
 
     ' Fungsi untuk memproses data blocking
-    Protected Function ProcessBlockingData(ByVal in_arFileContentLine() As String, ByVal sSubID As String, ByRef out_sMessageError As String) As Boolean
+    Protected Function ProcessBlockingData(ByVal in_arFileContentLine() As String, ByVal sSubID As String, ByRef out_sMessageError As String) As Tuple(Of Boolean, String)
         Dim bSuccess As Boolean = True
         Dim sAction As String = in_arFileContentLine(0).Trim().ToUpper()
         Dim sCaseID As String = in_arFileContentLine(1).Trim()
@@ -213,24 +201,36 @@ Public Class Upload
         Dim dtRegisteredDate As DateTime
         Dim dtReleaseDate As DateTime
 
-        If DateTime.TryParseExact(sRegisteredDate, "dd/MM/yyyy", Nothing, Globalization.DateTimeStyles.None, dtRegisteredDate) AndAlso
-    DateTime.TryParseExact(sReleaseDate, "dd/MM/yyyy", Nothing, Globalization.DateTimeStyles.None, dtReleaseDate) Then
+        Dim currentBlockingId As String
 
-            Try
-                Using con As New MySqlConnection(connectionString)
-                    con.Open()
 
-                    ' Check if data already exists
-                    Dim sSQLCheckExisting As String = "SELECT COUNT(*) FROM LB_BLOK_BLOCKING_DATA WHERE CASE_ID = @CaseID AND SID = @SID AND ACCOUNT_NO = @AccountNo"
-                    Dim dataExists As Boolean = False
 
-                    Using cmdCheck As New MySqlCommand(sSQLCheckExisting, con)
-                        cmdCheck.Parameters.AddWithValue("@CaseID", sCaseID)
-                        cmdCheck.Parameters.AddWithValue("@SID", sSID)
-                        cmdCheck.Parameters.AddWithValue("@AccountNo", sAccountNumber)
-                        dataExists = Convert.ToInt32(cmdCheck.ExecuteScalar()) > 0
+        Try
+            Using con As New MySqlConnection(connectionString)
+                con.Open()
+
+                ' Check if data already exists
+                Dim sSQLCheckExisting As String = "SELECT BLOCKING_ID FROM LB_BLOK_BLOCKING_DATA " &
+                                   "WHERE CASE_ID = @CaseID AND SID = @SID AND ACCOUNT_NO = @AccountNo"
+                Dim dataExists As Boolean = False
+
+                Using cmdCheck As New MySqlCommand(sSQLCheckExisting, con)
+                    cmdCheck.Parameters.AddWithValue("@CaseID", sCaseID)
+                    cmdCheck.Parameters.AddWithValue("@SID", sSID)
+                    cmdCheck.Parameters.AddWithValue("@AccountNo", sAccountNumber)
+
+                    Using reader As MySqlDataReader = cmdCheck.ExecuteReader()
+                        If reader.Read() Then
+                            ' Data exists
+                            dataExists = True
+                            ' Retrieve BLOCKING_ID
+                            currentBlockingId = If(reader.IsDBNull(reader.GetOrdinal("BLOCKING_ID")), String.Empty, reader.GetString(reader.GetOrdinal("BLOCKING_ID")))
+                        End If
                     End Using
+                End Using
 
+                If DateTime.TryParseExact(sRegisteredDate, "dd/MM/yyyy", Nothing, Globalization.DateTimeStyles.None, dtRegisteredDate) AndAlso
+    DateTime.TryParseExact(sReleaseDate, "dd/MM/yyyy", Nothing, Globalization.DateTimeStyles.None, dtReleaseDate) Then
                     If sAction = "CREATE" Then
                         If Not dataExists Then
                             ' Insert untuk aksi CREATE
@@ -353,18 +353,17 @@ Public Class Upload
                         out_sMessageError = "Aksi tidak valid."
                         bSuccess = False
                     End If
-
-                End Using
-            Catch ex As MySqlException
-                out_sMessageError = "Terjadi kesalahan saat memproses data: " & ex.Message
-                bSuccess = False
-            End Try
-        Else
-            out_sMessageError = "Format tanggal tidak valid. Harap gunakan format 'dd/MM/yyyy'."
+                Else
+                    out_sMessageError = "Format tanggal tidak valid. Harap gunakan format 'dd/MM/yyyy'."
+                    bSuccess = False
+                End If
+            End Using
+        Catch ex As MySqlException
+            out_sMessageError = "Terjadi kesalahan saat memproses data: " & ex.Message
             bSuccess = False
-        End If
+        End Try
 
-        Return bSuccess
+        Return Tuple.Create(bSuccess, currentBlockingId)
     End Function
 
 
