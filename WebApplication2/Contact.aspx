@@ -29,6 +29,7 @@
     flex-direction: column;
     }
     </style>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.css" rel="stylesheet" />
 	<link rel="stylesheet" href="https://code.jquery.com/ui/1.8.24/themes/base/jquery-ui.css">
 	<script src="https://code.jquery.com/jquery-1.8.2.js"></script>
 	<script src="https://code.jquery.com/ui/1.8.24/jquery-ui.js"></script>
@@ -112,12 +113,12 @@
                                 <td></td>
                             </tr>
                              <tr>
-                                <td><asp:Label ID="Label_Address_2" runat="server" ClientIDMode="Static">Address 2</asp:Label></td>
+                                <td><asp:Label ID="Label_Address_2" runat="server">Address 2</asp:Label></td>
                                 <td><asp:TextBox ID="Address_2" runat="server" Width="260px" Height="24px"></asp:TextBox></td>
                                 <td></td>
                              </tr>
                              <tr>
-                                <td><asp:Label ID="Label_Address_3" runat="server" ClientIDMode="Static">Address 3</asp:Label></td>
+                                <td><asp:Label ID="Label_Address_3" runat="server">Address 3</asp:Label></td>
                                 <td><asp:TextBox ID="Address_3" runat="server" Width="260px" Height="24px"></asp:TextBox></td>
                                 <td></td>
                              </tr>
@@ -168,28 +169,45 @@
     </div>
     <script>
         document.addEventListener('DOMContentLoaded', function () {
-            // Menambahkan event listener untuk tombol Reset
             var resetButton = document.getElementById('<%= Btn_Reset.ClientID %>');
-            if (resetButton) {
-                resetButton.addEventListener('click', function (e) {
-                    e.preventDefault(); // Menghindari aksi default dari tombol
+           if (resetButton) {
+               resetButton.addEventListener('click', function (e) {
+                   e.preventDefault(); // Menghindari aksi default dari tombol
 
-                    document.getElementById('<%= Contact_ID.ClientID %>').value = '';
-            document.getElementById('<%= Recipient.ClientID %>').selectedIndex = 0;
-            document.getElementById('<%= Member_Code.ClientID %>').selectedIndex = 0;
-            document.getElementById('<%= Person_To_Salutation.ClientID %>').selectedIndex = 0;
-            document.getElementById('<%= Person_To_Name.ClientID %>').value = '';
-            document.getElementById('<%= Position.ClientID %>').value = '';
-            document.getElementById('<%= EMail.ClientID %>').value = '';
+                   // Reset semua input field di dalam personToContainer, emailContainer, dan addressContainer
+                   var personToFields = document.querySelectorAll('#personToContainer input[type="text"], #personToContainer select');
+                   var emailFields = document.querySelectorAll('#emailContainer input[type="text"]');
+                   var addressFields = document.querySelectorAll('#addressContainer input[type="text"]');
+
+                   personToFields.forEach((field) => {
+                       if (field.tagName === 'SELECT') {
+                           field.selectedIndex = 0;
+                       } else {
+                           field.value = '';
+                       }
+                   });
+
+                   emailFields.forEach((field) => {
+                       field.value = '';
+                   });
+
+                   addressFields.forEach((field) => {
+                       field.value = '';
+                   });
+
+                   // Tambahkan reset manual untuk field lainnya di sini
+                   document.getElementById('<%= Position.ClientID %>').value = '';
             document.getElementById('<%= Company.ClientID %>').value = '';
             document.getElementById('<%= Address_1.ClientID %>').value = '';
             document.getElementById('<%= Address_2.ClientID %>').value = '';
             document.getElementById('<%= Address_3.ClientID %>').value = '';
         });
-            } else {
-                console.error('Button with ID "Btn_Reset" not found.');
-            }
-        });
+           } else {
+               console.error('Button with ID "Btn_Reset" not found.');
+           }
+       });
+
+
 
         function addPersonToField() {
             var personToContainer = document.getElementById('personToContainer');
@@ -213,6 +231,13 @@
                 salutationSelect.name = `Person_To_Salutation_${newIndex}`; // Set name attribute for salutation field
             }
 
+            // Change the "+" button to "-" and add functionality to remove the field
+            var addButton = newPersonToGroup.querySelector('.addPersonToButton');
+            addButton.textContent = '-';
+            addButton.onclick = function () {
+                removePersonToField(newPersonToGroup, newEmailField, newAddressField);
+            };
+
             personToContainer.appendChild(newPersonToGroup);
 
             var newEmailField = emailContainer.querySelector('input[type="text"]').cloneNode(true);
@@ -231,10 +256,29 @@
             console.log('addressContainer:', addressContainer.innerHTML);
         }
 
-
-
-
+        function removePersonToField(personToGroup, emailField, addressField) {
+            // Remove the respective fields from the containers
+            personToGroup.remove();
+            emailField.remove();
+            addressField.remove();
+        }
 
     </script>
+    <script type="text/javascript">
+        function showToast(type, message) {
+            switch (type) {
+                case 'success':
+                    toastr.success(message);
+                    break;
+                case 'error':
+                    toastr.error(message);
+                    break;
+                default:
+                    toastr.info(message);
+                    break;
+            }
+        }
+    </script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.js"></script>
     
     </asp:Content>
