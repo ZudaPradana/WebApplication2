@@ -159,14 +159,9 @@ Public Class Download
 
         ' Validasi bahwa jika "Registered Date From" diisi, "Registered Date From" tidak boleh lebih lama dari "Registered Date From"
 
-        If Not String.IsNullOrEmpty(txtRegisteredDateFrom.Text) AndAlso Not String.IsNullOrEmpty(txtRegisteredDateTo.Text) Then
-            Dim registeredDateFrom As DateTime = DateTime.Parse(txtRegisteredDateFrom.Text)
-            Dim registeredDateTo As DateTime = DateTime.Parse(txtRegisteredDateTo.Text)
-
-            If registeredDateTo < registeredDateFrom Then
-                ShowAlert("Registered To Date cannot be earlier than Registered Date From.")
-                Exit Sub
-            End If
+        If String.IsNullOrEmpty(txtRegisteredDateFrom.Text) AndAlso Not String.IsNullOrEmpty(txtRegisteredDateTo.Text) Then
+            ShowAlert("Fill the Registration date (from) first.")
+            Exit Sub
         End If
 
         ' Validasi bahwa jika "Registered Date From" diisi, "Closing Price Date" tidak boleh lebih lama dari "Registered Date From"

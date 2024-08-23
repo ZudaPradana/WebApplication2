@@ -37,7 +37,160 @@ WebApplication2
  Returns the Asp log object.
  </summary>
 </member>
-<member name="F:WebApplication2.About._Label_Output">
+<member name="F:WebApplication2.Download._txtSID">
+<summary>
+txtSID control.
+</summary>
+<remarks>
+Auto-generated field.
+To modify move field declaration from designer file to code-behind file.
+</remarks>
+</member>
+<member name="F:WebApplication2.Download._txtAccountNumber">
+<summary>
+txtAccountNumber control.
+</summary>
+<remarks>
+Auto-generated field.
+To modify move field declaration from designer file to code-behind file.
+</remarks>
+</member>
+<member name="F:WebApplication2.Download._RestrictionReason">
+<summary>
+RestrictionReason control.
+</summary>
+<remarks>
+Auto-generated field.
+To modify move field declaration from designer file to code-behind file.
+</remarks>
+</member>
+<member name="F:WebApplication2.Download._txtRegisteredDateFrom">
+<summary>
+txtRegisteredDateFrom control.
+</summary>
+<remarks>
+Auto-generated field.
+To modify move field declaration from designer file to code-behind file.
+</remarks>
+</member>
+<member name="F:WebApplication2.Download._txtRegisteredDateTo">
+<summary>
+txtRegisteredDateTo control.
+</summary>
+<remarks>
+Auto-generated field.
+To modify move field declaration from designer file to code-behind file.
+</remarks>
+</member>
+<member name="F:WebApplication2.Download._txtEventName">
+<summary>
+txtEventName control.
+</summary>
+<remarks>
+Auto-generated field.
+To modify move field declaration from designer file to code-behind file.
+</remarks>
+</member>
+<member name="F:WebApplication2.Download._txtRefNumber">
+<summary>
+txtRefNumber control.
+</summary>
+<remarks>
+Auto-generated field.
+To modify move field declaration from designer file to code-behind file.
+</remarks>
+</member>
+<member name="F:WebApplication2.Download._txtCaseName">
+<summary>
+txtCaseName control.
+</summary>
+<remarks>
+Auto-generated field.
+To modify move field declaration from designer file to code-behind file.
+</remarks>
+</member>
+<member name="F:WebApplication2.Download._txtInstrument">
+<summary>
+txtInstrument control.
+</summary>
+<remarks>
+Auto-generated field.
+To modify move field declaration from designer file to code-behind file.
+</remarks>
+</member>
+<member name="F:WebApplication2.Download._txtClosingPriceDate">
+<summary>
+txtClosingPriceDate control.
+</summary>
+<remarks>
+Auto-generated field.
+To modify move field declaration from designer file to code-behind file.
+</remarks>
+</member>
+<member name="F:WebApplication2.Download._btnReset">
+<summary>
+btnReset control.
+</summary>
+<remarks>
+Auto-generated field.
+To modify move field declaration from designer file to code-behind file.
+</remarks>
+</member>
+<member name="F:WebApplication2.Download._btnSearch">
+<summary>
+btnSearch control.
+</summary>
+<remarks>
+Auto-generated field.
+To modify move field declaration from designer file to code-behind file.
+</remarks>
+</member>
+<member name="F:WebApplication2.Download._AlertPanel">
+<summary>
+AlertPanel control.
+</summary>
+<remarks>
+Auto-generated field.
+To modify move field declaration from designer file to code-behind file.
+</remarks>
+</member>
+<member name="F:WebApplication2.Download._AlertMessage">
+<summary>
+AlertMessage control.
+</summary>
+<remarks>
+Auto-generated field.
+To modify move field declaration from designer file to code-behind file.
+</remarks>
+</member>
+<member name="F:WebApplication2.Download._LinkButton1">
+<summary>
+LinkButton1 control.
+</summary>
+<remarks>
+Auto-generated field.
+To modify move field declaration from designer file to code-behind file.
+</remarks>
+</member>
+<member name="F:WebApplication2.Download._LinkButton2">
+<summary>
+LinkButton2 control.
+</summary>
+<remarks>
+Auto-generated field.
+To modify move field declaration from designer file to code-behind file.
+</remarks>
+</member>
+<member name="F:WebApplication2.Download._GridView1">
+<summary>
+GridView1 control.
+</summary>
+<remarks>
+Auto-generated field.
+To modify move field declaration from designer file to code-behind file.
+</remarks>
+</member>
+<member name="F:WebApplication2.Upload._Label_Output">
 <summary>
 Label_Output control.
 </summary>
@@ -46,7 +199,7 @@ Auto-generated field.
 To modify move field declaration from designer file to code-behind file.
 </remarks>
 </member>
-<member name="F:WebApplication2.About._Label_Upload_File">
+<member name="F:WebApplication2.Upload._Label_Upload_File">
 <summary>
 Label_Upload_File control.
 </summary>
@@ -55,7 +208,7 @@ Auto-generated field.
 To modify move field declaration from designer file to code-behind file.
 </remarks>
 </member>
-<member name="F:WebApplication2.About._UploadFile">
+<member name="F:WebApplication2.Upload._UploadFile">
 <summary>
 UploadFile control.
 </summary>
@@ -64,7 +217,7 @@ Auto-generated field.
 To modify move field declaration from designer file to code-behind file.
 </remarks>
 </member>
-<member name="F:WebApplication2.About._Btn_Reset">
+<member name="F:WebApplication2.Upload._Btn_Reset">
 <summary>
 Btn_Reset control.
 </summary>
@@ -73,7 +226,7 @@ Auto-generated field.
 To modify move field declaration from designer file to code-behind file.
 </remarks>
 </member>
-<member name="F:WebApplication2.About._Btn_Submit">
+<member name="F:WebApplication2.Upload._Btn_Submit">
 <summary>
 Btn_Submit control.
 </summary>
