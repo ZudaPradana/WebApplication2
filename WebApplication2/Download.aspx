@@ -64,7 +64,10 @@
                 
                 <div class="col">
                     <label>Closing Price Date</label>
+                    <span style="color: red;"> * </span>
                     <asp:TextBox ID="txtClosingPriceDate" runat="server" CssClass="form-control" type="date"></asp:TextBox>
+                    <asp:RequiredFieldValidator ID="rfvClosingPriceDate" runat="server" ControlToValidate="txtClosingPriceDate" ErrorMessage="Closing Price Date is required." CssClass="text-danger" Display="Dynamic"></asp:RequiredFieldValidator>
+
                 </div>
             </div>
             <div class="row mb-3">
