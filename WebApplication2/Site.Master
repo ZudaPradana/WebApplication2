@@ -42,6 +42,7 @@
                         <li class="nav-item"><a class="nav-link" runat="server" href="~/Contact">Contact</a></li>
                         <li class="nav-item"><a class="nav-link" runat="server" href="~/UploadInquiry">Upload Inquiry</a></li>
                         <li class="nav-item"><a class="nav-link" runat="server" href="~/Download">Download</a></li>
+                        <li class="nav-item"><a class="nav-link" runat="server" href="~/InquiryBlockingData">Inquiry Blocking Data</a></li>
                     </ul>
                 </div>
             </div>

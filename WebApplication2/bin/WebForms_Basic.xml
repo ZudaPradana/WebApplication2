@@ -37,6 +37,15 @@ WebApplication2
  Returns the Asp log object.
  </summary>
 </member>
+<member name="F:WebApplication2.DetailInquiryBlockingData._DetailsView1">
+<summary>
+DetailsView1 control.
+</summary>
+<remarks>
+Auto-generated field.
+To modify move field declaration from designer file to code-behind file.
+</remarks>
+</member>
 <member name="F:WebApplication2.Download._txtSID">
 <summary>
 txtSID control.
@@ -127,6 +136,15 @@ Auto-generated field.
 To modify move field declaration from designer file to code-behind file.
 </remarks>
 </member>
+<member name="F:WebApplication2.Download._rfvClosingPriceDate">
+<summary>
+rfvClosingPriceDate control.
+</summary>
+<remarks>
+Auto-generated field.
+To modify move field declaration from designer file to code-behind file.
+</remarks>
+</member>
 <member name="F:WebApplication2.Download._btnReset">
 <summary>
 btnReset control.
@@ -182,6 +200,150 @@ To modify move field declaration from designer file to code-behind file.
 </remarks>
 </member>
 <member name="F:WebApplication2.Download._GridView1">
+<summary>
+GridView1 control.
+</summary>
+<remarks>
+Auto-generated field.
+To modify move field declaration from designer file to code-behind file.
+</remarks>
+</member>
+<member name="F:WebApplication2.InquiryBlockingData._Requester">
+<summary>
+Requester control.
+</summary>
+<remarks>
+Auto-generated field.
+To modify move field declaration from designer file to code-behind file.
+</remarks>
+</member>
+<member name="F:WebApplication2.InquiryBlockingData._TxtEventName">
+<summary>
+TxtEventName control.
+</summary>
+<remarks>
+Auto-generated field.
+To modify move field declaration from designer file to code-behind file.
+</remarks>
+</member>
+<member name="F:WebApplication2.InquiryBlockingData._txtCaseName">
+<summary>
+txtCaseName control.
+</summary>
+<remarks>
+Auto-generated field.
+To modify move field declaration from designer file to code-behind file.
+</remarks>
+</member>
+<member name="F:WebApplication2.InquiryBlockingData._txtCaseId">
+<summary>
+txtCaseId control.
+</summary>
+<remarks>
+Auto-generated field.
+To modify move field declaration from designer file to code-behind file.
+</remarks>
+</member>
+<member name="F:WebApplication2.InquiryBlockingData._txtRefNumber">
+<summary>
+txtRefNumber control.
+</summary>
+<remarks>
+Auto-generated field.
+To modify move field declaration from designer file to code-behind file.
+</remarks>
+</member>
+<member name="F:WebApplication2.InquiryBlockingData._txtDateFrom">
+<summary>
+txtDateFrom control.
+</summary>
+<remarks>
+Auto-generated field.
+To modify move field declaration from designer file to code-behind file.
+</remarks>
+</member>
+<member name="F:WebApplication2.InquiryBlockingData._txtDateTo">
+<summary>
+txtDateTo control.
+</summary>
+<remarks>
+Auto-generated field.
+To modify move field declaration from designer file to code-behind file.
+</remarks>
+</member>
+<member name="F:WebApplication2.InquiryBlockingData._txtClosingPriceDate">
+<summary>
+txtClosingPriceDate control.
+</summary>
+<remarks>
+Auto-generated field.
+To modify move field declaration from designer file to code-behind file.
+</remarks>
+</member>
+<member name="F:WebApplication2.InquiryBlockingData._rfvClosingPriceDate">
+<summary>
+rfvClosingPriceDate control.
+</summary>
+<remarks>
+Auto-generated field.
+To modify move field declaration from designer file to code-behind file.
+</remarks>
+</member>
+<member name="F:WebApplication2.InquiryBlockingData._btnReset">
+<summary>
+btnReset control.
+</summary>
+<remarks>
+Auto-generated field.
+To modify move field declaration from designer file to code-behind file.
+</remarks>
+</member>
+<member name="F:WebApplication2.InquiryBlockingData._btnSearch">
+<summary>
+btnSearch control.
+</summary>
+<remarks>
+Auto-generated field.
+To modify move field declaration from designer file to code-behind file.
+</remarks>
+</member>
+<member name="F:WebApplication2.InquiryBlockingData._AlertPanel">
+<summary>
+AlertPanel control.
+</summary>
+<remarks>
+Auto-generated field.
+To modify move field declaration from designer file to code-behind file.
+</remarks>
+</member>
+<member name="F:WebApplication2.InquiryBlockingData._AlertMessage">
+<summary>
+AlertMessage control.
+</summary>
+<remarks>
+Auto-generated field.
+To modify move field declaration from designer file to code-behind file.
+</remarks>
+</member>
+<member name="F:WebApplication2.InquiryBlockingData._LinkButton1">
+<summary>
+LinkButton1 control.
+</summary>
+<remarks>
+Auto-generated field.
+To modify move field declaration from designer file to code-behind file.
+</remarks>
+</member>
+<member name="F:WebApplication2.InquiryBlockingData._LinkButton2">
+<summary>
+LinkButton2 control.
+</summary>
+<remarks>
+Auto-generated field.
+To modify move field declaration from designer file to code-behind file.
+</remarks>
+</member>
+<member name="F:WebApplication2.InquiryBlockingData._GridView1">
 <summary>
 GridView1 control.
 </summary>
@@ -454,6 +616,33 @@ To modify move field declaration from designer file to code-behind file.
 <member name="F:WebApplication2.SiteMaster._MainContent">
 <summary>
 MainContent control.
+</summary>
+<remarks>
+Auto-generated field.
+To modify move field declaration from designer file to code-behind file.
+</remarks>
+</member>
+<member name="F:WebApplication2.UploadInquiry._Search">
+<summary>
+Search control.
+</summary>
+<remarks>
+Auto-generated field.
+To modify move field declaration from designer file to code-behind file.
+</remarks>
+</member>
+<member name="F:WebApplication2.UploadInquiry._Btn_Search">
+<summary>
+Btn_Search control.
+</summary>
+<remarks>
+Auto-generated field.
+To modify move field declaration from designer file to code-behind file.
+</remarks>
+</member>
+<member name="F:WebApplication2.UploadInquiry._GV_Upload_Inquiry">
+<summary>
+GV_Upload_Inquiry control.
 </summary>
 <remarks>
 Auto-generated field.
