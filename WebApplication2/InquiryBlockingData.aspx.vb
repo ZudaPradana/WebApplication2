@@ -42,7 +42,7 @@ Public Class InquiryBlockingData
 
     ' Fungsi untuk membangun query dan parameter berdasarkan filter
     Private Function GetFilteredCommand() As String
-        Dim query As String = "SELECT EventName, Requester, c.CaseId, CaseName, RefNumber, Date FROM cases c join CaseDetails cd using(CaseID) WHERE 1=1"
+        Dim query As String = "SELECT EventName, Requester, c.CaseId, CaseName, RefNumber, Date FROM lb_blok_inquiry_blocking_data c join lb_blok_inquiry_blocking_data_details cd using(CaseID) WHERE 1=1"
 
         'Apply filters based on user input
         If Not String.IsNullOrEmpty(Requester.SelectedValue) Then

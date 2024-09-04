@@ -19,7 +19,7 @@ Public Class DetailInquiryBlockingData
 
         Using con As New MySqlConnection(connectionString)
             Dim cmd As New MySqlCommand()
-            cmd.CommandText = "SELECT * FROM CaseDetails WHERE CaseID = " & caseID
+            cmd.CommandText = "SELECT * FROM lb_blok_inquiry_blocking_data_details WHERE CaseID = " & caseID
             cmd.Connection = con
 
             Dim da As New MySqlDataAdapter(cmd)
